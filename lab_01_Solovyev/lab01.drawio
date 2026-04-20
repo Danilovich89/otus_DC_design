@@ -163,10 +163,10 @@
         <mxCell id="fTsys_Q68l4_gb95fum5-54" parent="fTsys_Q68l4_gb95fum5-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" value="EthX" vertex="1">
           <mxGeometry height="20" width="70" x="837.49" y="690" as="geometry" />
         </mxCell>
-        <mxCell id="fTsys_Q68l4_gb95fum5-55" parent="fTsys_Q68l4_gb95fum5-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" value="Eth(X+10)" vertex="1">
+        <mxCell id="fTsys_Q68l4_gb95fum5-55" parent="fTsys_Q68l4_gb95fum5-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" value="EthX" vertex="1">
           <mxGeometry height="20" width="70" x="1260" y="690" as="geometry" />
         </mxCell>
-        <mxCell id="fTsys_Q68l4_gb95fum5-56" parent="fTsys_Q68l4_gb95fum5-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" value="PoX" vertex="1">
+        <mxCell id="fTsys_Q68l4_gb95fum5-56" parent="fTsys_Q68l4_gb95fum5-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" value="Eth" vertex="1">
           <mxGeometry height="20" width="70" x="1704.24" y="690" as="geometry" />
         </mxCell>
         <mxCell id="fTsys_Q68l4_gb95fum5-57" edge="1" parent="fTsys_Q68l4_gb95fum5-1" source="fTsys_Q68l4_gb95fum5-43" style="endArrow=none;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="fTsys_Q68l4_gb95fum5-8" value="">
