@@ -3,7 +3,7 @@
 
 #### Конфиги
 
-Spine-1:
+##### Spine-1:
 ```
 Spine-1#show running-config section ospf
 interface Ethernet1
@@ -24,7 +24,7 @@ router ospf 1
    max-lsa 12000
 ```
 
-Spine-2:
+##### Spine-2:
 ```
 Spine-2#show running-config section ospf
 interface Ethernet1
@@ -45,7 +45,7 @@ router ospf 1
    max-lsa 12000
 ```
 
-Leaf-1:
+##### Leaf-1:
 ```
 Leaf1#show run sec ospf
 interface Ethernet1
@@ -60,7 +60,7 @@ router ospf 1
    max-lsa 12000
 ```
 
-Leaf-2:
+##### Leaf-2:
 ```
 Leaf2#show running-config section ospf
 interface Ethernet1
@@ -75,7 +75,7 @@ router ospf 1
    max-lsa 12000
 ```
 
-Leaf-3:
+##### Leaf-3:
 ```
 Leaf3#show run sec ospf
 interface Ethernet1
@@ -90,7 +90,7 @@ router ospf 1
    max-lsa 12000
 ```
 
-Leaf-4:
+##### Leaf-4:
 ```
 Leaf4#show running-config section ospf
 interface Ethernet1
@@ -106,7 +106,7 @@ router ospf 1
 ```
 
 #### Установленные соседства:
-Spine-1:
+##### Spine-1:
 ```
 Spine-1#show ip ospf neighbor
 Neighbor ID     Instance VRF      Pri State                  Dead Time   Address         Interface
@@ -116,7 +116,7 @@ Neighbor ID     Instance VRF      Pri State                  Dead Time   Address
 4.4.4.4         1        default  0   FULL                   00:00:29    111.4.4.2       Ethernet4
 ```
 
-Spine-2:
+##### Spine-2:
 ```
 Spine-2#show ip ospf nei
 Neighbor ID     Instance VRF      Pri State                  Dead Time   Address         Interface
