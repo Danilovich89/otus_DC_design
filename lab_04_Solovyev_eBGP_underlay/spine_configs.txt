@@ -1,10 +1,5 @@
-### Четвертое домашнее задание  - eBGP underlay
-Здесь была собрана виртуальная лаба в GNS3 на Arista. Далее продолжаем в ней.
+Spine1
 
-#### Конфиги
-
-##### Spine-1:
-```
 
 Spine-1(config-router-bgp)#sh run sec bgp
 router bgp 65100
@@ -22,10 +17,12 @@ router bgp 65100
       redistribute connected route-map RM_RED_L0
 
 
-```
 
-##### Spine-2:
-```
+
+
+
+Spine2
+
 router bgp 65100
    router-id 222.222.222.222
    maximum-paths 4 ecmp 4
@@ -39,45 +36,3 @@ router bgp 65100
    address-family ipv4
       neighbor LEAFS activate
       redistribute connected route-map RM_RED_L0
-
-```
-
-##### Leaf-1:
-```
-Leaf1#show run sec bgp
-
-```
-
-##### Leaf-2:
-```
-Leaf2#show running-config section bgp
-
-```
-
-##### Leaf-3:
-```
-Leaf3#show run sec bgp
-
-```
-
-##### Leaf-4:
-```
-Leaf4#show running-config section bgp
-
-```
-
-#### Установленные соседства:
-##### Spine-1:
-```
-Spine-1#show ip ospf neighbor
-
-```
-
-##### Spine-2:
-```
-Spine-2#show ip ospf nei
-
-```
-
-
-#### Маршруты:

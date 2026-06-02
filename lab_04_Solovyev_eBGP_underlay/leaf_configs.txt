@@ -1,0 +1,19 @@
+Leaf1
+
+conf t
+router bgp 65001
+router-id 1.1.1.1
+reconnect-interval 12
+log-neighbor-changes
+address-family ipv4 unicast
+maximum-paths 10
+template peer SPINES
+bfd
+remote-as 65100
+timers 3 9
+address-family ipv4 unicast
+neighbor 111.111.111.111
+inherit peer SPINES
+neighbor 222.222.222.222
+inherit peer SPINES
+end
