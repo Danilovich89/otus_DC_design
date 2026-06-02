@@ -44,7 +44,3 @@ Leaf4|Loopback0|4.4.4.4|255.255.255.255|router_id_Leaf4|-
 Leaf4|Loopback1|4.4.4.44|255.255.255.255|vtep_source_Leaf4|-
 Leaf4|Ethernet1|111.4.4.2|255.255.255.252|to_Spine1|100G
 Leaf4|Ethernet2|222.4.4.2|255.255.255.252|to_Spine2|100G
-
-
-### Третье домашнее задание - ISIS
-
