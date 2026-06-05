@@ -1,5 +1,5 @@
 ### Пятое домашнее задание  - VXLAN EVPN L2
-Underlay на eBGP уже собран, прололжаем. Делаем overlay VXLAN EVPN L2.
+Underlay на eBGP уже собран, продолжаем. Делаем overlay VXLAN EVPN L2.
 
 #### Адресация CE
 |Device|Interface|IP Address|Subnet Mask|Description|Vlan
