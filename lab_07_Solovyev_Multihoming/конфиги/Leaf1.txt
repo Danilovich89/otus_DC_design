@@ -1,0 +1,2084 @@
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+Gateway of last resort is not set
+
+ C        1.1.1.1/32 is directly connected, Loopback0
+ C        1.1.1.11/32 is directly connected, Loopback1
+ B E      2.2.2.2/32 [200/0] via 111.1.1.1, Ethernet1
+                             via 222.1.1.1, Ethernet2
+ B E      2.2.2.22/32 [200/0] via 111.1.1.1, Ethernet1
+                              via 222.1.1.1, Ethernet2
+ B E      3.3.3.3/32 [200/0] via 111.1.1.1, Ethernet1
+                             via 222.1.1.1, Ethernet2
+ B E      3.3.3.33/32 [200/0] via 111.1.1.1, Ethernet1
+                              via 222.1.1.1, Ethernet2
+ B E      4.4.4.4/32 [200/0] via 111.1.1.1, Ethernet1
+                             via 222.1.1.1, Ethernet2
+ B E      4.4.4.44/32 [200/0] via 111.1.1.1, Ethernet1
+                              via 222.1.1.1, Ethernet2
+ C        111.1.1.0/30 is directly connected, Ethernet1
+ B E      111.2.2.0/30 [200/0] via 111.1.1.1, Ethernet1
+                               via 222.1.1.1, Ethernet2
+ B E      111.3.3.0/30 [200/0] via 111.1.1.1, Ethernet1
+                               via 222.1.1.1, Ethernet2
+ B E      111.4.4.0/30 [200/0] via 111.1.1.1, Ethernet1
+                               via 222.1.1.1, Ethernet2
+ B E      111.111.111.111/32 [200/0] via 111.1.1.1, Ethernet1
+ C        222.1.1.0/30 is directly connected, Ethernet2
+ B E      222.2.2.0/30 [200/0] via 222.1.1.1, Ethernet2
+ B E      222.3.3.0/30 [200/0] via 222.1.1.1, Ethernet2
+ B E      222.4.4.0/30 [200/0] via 222.1.1.1, Ethernet2
+ B E      222.222.222.222/32 [200/0] via 222.1.1.1, Ethernet2
+
+Leaf1#show running-config
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+system mac-address 00:00:00:00:00:01
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel 10
+Leaf1(config-if-Po10)#?
+  adjacency-segment       Set IS-IS SR adjacency segment interface configuration
+  arp                     ARP config commands
+  bfd                     Configure BFD specific configurations
+  bgp                     Configure BGP commands
+  bridge                  bridge keyword
+  description             Description string to associate with the interface
+  dhcp                    DHCP server, client and relay interface configuration
+  evpn                    EVPN Configuration
+  flow                    Interface flow config commands
+  flow-spec               Enable flow-spec
+  forwarding              Configure port forwarding
+  health                  Set health parameters of an interface
+  igmp                    IGMP related status and configuration
+  ip                      Interface IP config commands
+  ipv6                    Interface IPv6 config commands
+  isis                    IS-IS commands
+  l2                      Configure L2
+  l2-protocol             Set L2 protocol characteristics of the interface
+  lacp                    Set LACP parameter
+  link                    Configure link state tracking information
+  load-interval           Time used in calculating interface utilization
+  logging                 Interface-related logging configuration
+  loop-protection         Enable loop protection on this interface
+  mac                     Interface MAC config commands
+  mac-address             Set interface MAC address
+  mc-tx-queue             Configure multicast transmit queue parameters
+  mfib                    Multicast FIB
+  mlag                    MLAG Membership
+  mld                     Multicast Listener Discovery commands
+  monitor                 Configure monitoring
+  mpls                    Interface level MPLS configuration commands
+  mtu                     Set IP Maximum Transmission Unit size in bytes
+  multicast               Multicast routing commands
+  node-segment            Configure a node segment
+  ntp                     Configure NTP
+  ospfv3                  OSPF Version 3
+  performance-monitoring  Set performance-monitoring parameters
+  pim                     Protocol Independent Multicast (PIM)
+  port-channel            Set port-channel parameters
+  profile                 Apply a profile to this interface
+  ptp                     Precision Time Protocol
+  qos                     Configure QoS parameters
+  rip                     Routing Information Protocol
+  service-policy          Service policy configuration
+  service-profile         Configure QoS profile
+  sflow                   sFlow configuration
+  shape                   Configure shaping parameters
+  shutdown                Administratively shut off the interface
+  snmp                    Set interface SNMP parameters
+  spanning-tree           Spanning tree protocol
+  switchport              Set switching mode characteristics
+  tag                     Configure Tag for the interface
+  telemetry               Apply telemetry feature
+  traffic-engineering     Configure traffic-engineering
+  uc-tx-queue             Configure unicast transmit queue parameters
+  vmtracer                Enable VmTracer on this interface
+  vrf                     Specify VRF for interface
+  vrrp                    Virtual Router Redundancy Protocol (VRRP)
+  ----------------------------------------
+  comment                 Up to 240 characters, comment for this mode
+  default                 Set a command to its defaults
+  exit                    Leave Interface configuration mode
+  no                      Disable the command that follows
+  show                    Display details of switch operation
+  !!                      Append to comment
+
+Leaf1(config-if-Po10)#evpn ?
+  ethernet-segment  Ethernet segment configuration
+
+Leaf1(config-if-Po10)#evpn ethernet-segment ?
+  <cr>
+
+Leaf1(config-if-Po10)#evpn ethernet-segment
+Leaf1(config-evpn-es)#?
+  designated-forwarder  Designated PE for broadcast, unknown unicast and
+                        multicast packets
+  identifier            10 octet ethernet segment identifier
+  mpls                  MPLS config
+  redundancy            Multihoming redundancy mode configuration
+  route-target          Route Target
+  ----------------------------------------
+  comment               Up to 240 characters, comment for this mode
+  default               Set a command to its defaults
+  exit                  Leave Configure mode
+  no                    Disable the command that follows
+  show                  Display details of switch operation
+  !!                    Append to comment
+
+Leaf1(config-evpn-es)#route-target ?
+  import  Route Import
+
+Leaf1(config-evpn-es)#route-target import ?
+  H.H.H  Low-order 6 bytes of ES-Import Route Target
+
+Leaf1(config-evpn-es)#route-target import 00:00:00:00:12:12
+Leaf1(config-evpn-es)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-evpn-es)#end
+Leaf1#how bgp evpn route-type auto-discovery
+% Invalid input
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn summary
+BGP summary information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Neighbor Status Codes: m - Under maintenance
+  Neighbor        V AS           MsgRcvd   MsgSent  InQ OutQ  Up/Down State   PfxRcd PfxAcc
+  111.111.111.111 4 65100         425222    425382    0    0    4d04h Estab   4      4
+  222.222.222.222 4 65100         425296    425296    0    0    4d04h Estab   4      4
+Leaf1#show interfaces Ethernet 11
+Ethernet11 is up, line protocol is up (connected)
+  Hardware is Ethernet, address is 504a.a900.3e0b (bia 504a.a900.3e0b)
+  Member of Port-Channel10
+  Ethernet MTU 9214 bytes, BW 1000000 kbit
+  Full-duplex, 1Gb/s, auto negotiation: off, uni-link: n/a
+  Up 7 minutes, 29 seconds
+  Loopback Mode : None
+  22 link status changes since last clear
+  Last clearing of "show interface" counters never
+  5 minutes input rate 0 bps (0.0% with framing overhead), 0 packets/sec
+  5 minutes output rate 0 bps (0.0% with framing overhead), 0 packets/sec
+     1552 packets input, 180746 bytes
+     Received 132 broadcasts, 182 multicast
+     0 runts, 0 giants
+     0 input errors, 0 CRC, 0 alignment, 0 symbol, 0 input discards
+     0 PAUSE input
+     200943 packets output, 26459540 bytes
+     Sent 5737 broadcasts, 194135 multicast
+     0 output errors, 0 collisions
+     0 late collision, 0 deferred, 0 output discards
+     0 PAUSE output
+Leaf1#show interfaces Port-Channel 10
+Port-Channel10 is up, line protocol is up (connected)
+  Hardware is Port-Channel, address is 504a.a900.3e0b
+  Ethernet MTU 9214 bytes, BW 1000000 kbit
+  Full-duplex, 1Gb/s
+  Active members in this channel: 1
+  ... Ethernet11 , Full-duplex, 1Gb/s
+  Fallback mode is: off
+  Up 7 minutes, 57 seconds
+  14 link status changes since last clear
+  Last clearing of "show interface" counters never
+  5 minutes input rate 0 bps (0.0% with framing overhead), 0 packets/sec
+  5 minutes output rate 0 bps (0.0% with framing overhead), 0 packets/sec
+     382 packets input, 43914 bytes
+     Received 18 broadcasts, 29 multicast
+     0 input errors, 0 input discards
+     1665 packets output, 207578 bytes
+     Sent 39 broadcasts, 1394 multicast
+     0 output errors, 0 output discards
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel 10
+Leaf1(config-if-Po10)#evpn ethernet-segment
+Leaf1(config-evpn-es)#redundancy all-active
+Leaf1(config-evpn-es)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-evpn-es)#end
+Leaf1#show running-config
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+system mac-address 00:00:00:00:00:01
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      route-target import 00:00:00:00:12:12
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Neighbor                 AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+--------------- ----------- ------------- ----------------------- -------------- ---------- ----------
+111.1.1.1             65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   L2VPN EVPN              Negotiated              4          4
+222.1.1.1             65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   L2VPN EVPN              Negotiated              4          4
+Leaf1#show lacp peer
+State: A = Active, P = Passive; S=ShortTimeout, L=LongTimeout;
+       G = Aggregable, I = Individual; s+=InSync, s-=OutOfSync;
+       C = Collecting, X = state machine expired,
+       D = Distributing, d = default neighbor state
+                 |                        Partner
+ Port    Status  | Sys-id                    Port#   State     OperKey  PortPri
+------ ----------|------------------------- ------- --------- --------- -------
+Port Channel Port-Channel10:
+ Et11    Bundled | FFFF,6e-6a-dd-d9-60-3c        1   ASGs+CD    0x000f      255
+
+Leaf1#show running-config
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+system mac-address 00:00:00:00:00:01
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      route-target import 00:00:00:00:12:12
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel 10
+Leaf1(config-if-Po10)#evpn ethernet-segment
+Leaf1(config-evpn-es)#designated-forwarder election hold-time 20
+Leaf1(config-evpn-es)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-evpn-es)#end
+Leaf1#show eth
+  etherchannel  This command is deprecated by 'show port-channel'
+
+Leaf1#show bgp evpn d?
+detail  domain
+
+Leaf1#show bgp evpn detail ?
+  >     Redirect output to URL
+  >>    Append redirected output to URL
+  |     Command output pipe filters
+  <cr>
+
+Leaf1#show bgp evpn detail
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+BGP routing table entry for ip-prefix 192.168.10.0/24, Route Distinguisher: 1.1.1.1:1
+ Paths: 1 available
+  Local
+    - from - (0.0.0.0)
+      Origin IGP, metric -, localpref -, weight 0, tag 0, valid, local, best, redistributed (Connected)
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+BGP routing table entry for ip-prefix 192.168.10.0/24, Route Distinguisher: 2.2.2.2:1
+ Paths: 2 available
+  65100 65002
+    2.2.2.2 from 222.222.222.222 (222.222.222.222)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP head, ECMP, best, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+  65100 65002
+    2.2.2.2 from 111.111.111.111 (111.111.111.111)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+BGP routing table entry for ip-prefix 192.168.20.0/24, Route Distinguisher: 1.1.1.1:1
+ Paths: 1 available
+  Local
+    - from - (0.0.0.0)
+      Origin IGP, metric -, localpref -, weight 0, tag 0, valid, local, best, redistributed (Connected)
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+BGP routing table entry for ip-prefix 192.168.20.0/24, Route Distinguisher: 2.2.2.2:1
+ Paths: 2 available
+  65100 65002
+    2.2.2.2 from 111.111.111.111 (111.111.111.111)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP head, ECMP, best, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+  65100 65002
+    2.2.2.2 from 222.222.222.222 (222.222.222.222)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:12:12:12:12:12:12
+      VNI: 10100
+BGP routing table entry for ip-prefix 192.168.30.0/24, Route Distinguisher: 3.3.3.3:1
+ Paths: 2 available
+  65100 65003
+    3.3.3.3 from 222.222.222.222 (222.222.222.222)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP head, ECMP, best, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:00:00:00:00:00:03
+      VNI: 10100
+  65100 65003
+    3.3.3.3 from 111.111.111.111 (111.111.111.111)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:00:00:00:00:00:03
+      VNI: 10100
+BGP routing table entry for ip-prefix 192.168.40.0/24, Route Distinguisher: 4.4.4.4:1
+ Paths: 2 available
+  65100 65004
+    4.4.4.4 from 111.111.111.111 (111.111.111.111)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP head, ECMP, best, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:00:00:00:00:00:04
+      VNI: 10100
+  65100 65004
+    4.4.4.4 from 222.222.222.222 (222.222.222.222)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, ECMP, ECMP contributor
+      Extended Community: Route-Target-AS:65100:10100 TunnelEncap:tunnelTypeVxlan EvpnRouterMac:00:00:00:00:00:04
+      VNI: 10100
+Leaf1#show bgp evpn ?
+  community        BGP routes filtered by communities
+  detail           Detailed view
+  domain           Filter by route domain
+  esi              Filter by Ethernet Segment Identifier
+  extcommunity     Match BGP/VPN extended community list
+  host-flap        MAC addresses blacklisted due to duplication
+  instance         EVPN instance
+  large-community  BGP routes filtered by large community
+  multicast        Filter by multicast group and/or source
+  next-hop         Filter by next hop (remote VTEP) IPv4 or IPv6 address
+  rd               Filter by route distinguisher
+  route-type       Filter by NLRI route type
+  sanity           EVPN Sanity
+  summary          Summarized BGP information
+  vni              Filter by VXLAN network identifier
+  >                Redirect output to URL
+  >>               Append redirected output to URL
+  |                Command output pipe filters
+  <cr>
+
+Leaf1#show bgp evpn sanity
+Leaf1#show bgp evpn sanity?
+sanity
+
+Leaf1#show bgp evpn sanity ?
+  brief   Show brief information
+  detail  Show comprehensive output
+  >       Redirect output to URL
+  >>      Append redirected output to URL
+  |       Command output pipe filters
+  <cr>
+
+Leaf1#show bgp evpn sanity brief
+Leaf1#show interfaces ?
+  Ethernet               hardware Ethernet interface
+  Fabric                 Fabric Interfaces
+  Loopback               Hardware interface used for looping packets
+  Management             Management interface
+  Port-Channel           Lag interface
+  Tunnel                 Tunnel interface
+  Vlan                   Logical interface into a VLAN
+  Vxlan                  Vxlan Tunnel Interface
+  all                    Include internal interfaces
+  config-sanity          Check for interface configuration errors
+  counters               Interface counters
+  debounce               Show interface link-debounce information
+  description            Details on description strings of interfaces
+  encapsulation          Show encapsulation information
+  error-correction       Show interface error correction information
+  flow-control           Show interface flow-control information
+  hardware               Show interface hardware capabilities information
+  l2                     Show interface l2 information
+  l2-protocol            interface l2-protocol information
+  mac                    Display MAC status
+  negotiation            Show interface Auto-Negotiation status
+  phy                    Display low-level PHY status
+  priority-flow-control  Show interface PFC information
+  status                 Details on the state of interfaces
+  switchport             Details on switchports
+  transceiver            Details on transceivers
+  trunk                  Show interface trunk information
+  unidirectional         Show unidirectional link mode
+  vlans                  Details on VLAN interfaces
+  >                      Redirect output to URL
+  >>                     Append redirected output to URL
+  |                      Command output pipe filters
+  <cr>
+
+Leaf1#show interfaces Port-Channel ?
+  $           list end
+  <1-999999>  Lag interface number
+
+Leaf1#show interfaces Port-Channel 10 ?
+  config-sanity          Check for interface configuration errors
+  counters               Interface counters
+  debounce               Show interface link-debounce information
+  description            Details on description strings of interfaces
+  encapsulation          Show encapsulation information
+  error-correction       Show interface error correction information
+  flow-control           Show interface flow-control information
+  hardware               Show interface hardware capabilities information
+  l2                     Show interface l2 information
+  l2-protocol            interface l2-protocol information
+  mac                    Display MAC status
+  negotiation            Show interface Auto-Negotiation status
+  phy                    Display low-level PHY status
+  priority-flow-control  Show interface PFC information
+  status                 Details on the state of interfaces
+  switchport             Details on switchports
+  transceiver            Details on transceivers
+  trunk                  Show interface trunk information
+  unidirectional         Show unidirectional link mode
+  vlans                  Details on VLAN interfaces
+  ,                      extend list
+  -                      specify range
+  .                      subinterface
+  >                      Redirect output to URL
+  >>                     Append redirected output to URL
+  |                      Command output pipe filters
+  <cr>
+
+Leaf1#show interfaces Port-Channel 10 config-sanity
+Configuration sanity checking for interface 'Port-Channel10' is not supported.
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#
+Leaf1#
+Leaf1#show running-config | section ethernet-segment
+interface Port-Channel10
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:00:12:12
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel 10
+Leaf1(config-if-Po10)#redundancy al
+% Invalid input
+Leaf1(config-if-Po10)#redundancy ?
+  manual  Manual commands
+  <cr>
+
+Leaf1(config-if-Po10)#evpn ethernet-segment
+Leaf1(config-evpn-es)#redundancy all-active
+Leaf1(config-evpn-es)#identifier 0000:0000:0000:0000:1212:1212:1212:1212:1212
+% Ambiguous command
+Leaf1(config-evpn-es)#end
+Leaf1#show running-config
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+system mac-address 00:00:00:00:00:01
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:00:12:12
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#configure t
+Leaf1(config)#no system mac-address 00:00:00:00:00:01
+! Change will take effect only after switch reboot.
+Leaf1(config)#
+Leaf1(config)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config)#reload power
+! Image does not support next image compatibility checks. Running only checks from the current image.
+! Next image is missing platform architecture data file.
+Proceed with reload? [confirm]
+
+Broadcast message from root@Leaf1 (pts/3) (Tue Jun  9 13:35:24 2026):
+
+The system is going down for reboot NOW!
+
+Flushing AAA accounting queue: [  OK  ]
+
+Restarting system
+[13:35:25] watchdog punch .
+[13:35:26] watchdog punch .
+[13:35:26] watchdog punch .
+[13:35:26] watchdog punch .
+[364295.530741] sysrq: Remount R/O
+[13:35:27] watchdog punch .
+[13:35:27] watchdog punch .
+[13:35:27] watchdog punch .
+[13:35:28] watchdog punch .
+Error: No matching scd device found on this machine
+                                                   Smbus transaction failed (/sb/1/0x23 0x4 0xde), exception = Aham request failed
+                                                                                                                                  Powercycle script had no effect; platform = veos
+                                                                                                                                                                                  Stopping Pr                                                                                                                                ocMgr and managed processes: [FAILED]
+[364308.640992] systemd-shutdown[1]: Failed to parse (null): No such file or directory
+[364308.642327] systemd-shutdown[1]: Failed to deactivate swaps: No such file or directory
+[364308.646264] [31673]: Failed to unmount /mnt/flash: Device or resource busy
+[364309.688404] reboot: Restarting system
+SeaBIOS (version 1.16.3-4.el9)
+Machine UUID f32a8c1a-526f-4752-9a54-c5257c1a6e89
+
+
+iPXE (http://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+7EFD18F0+7EF318F0 CA00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:04.0 CB00 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 CB00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:05.0 CC00 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 CC00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:06.0 CD00 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 CD00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:07.0 CE00 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 CE00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:08.0 CF00 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 CF00
+
+
+
+
+
+iPXE (http://ipxe.org) 00:09.0 D000 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D000
+
+
+
+
+
+iPXE (http://ipxe.org) 00:0A.0 D100 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D100
+
+
+
+
+
+
+
+
+Booting from DVD/CD...
+
+ISOLINUX 4.05 0x5be438e0 ETCD Copyright (C) 1994-2011 H. Peter Anvin et al
+iPXE (http://ipxe.org) 00:0C.0 D300 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D300
+ISOLINUX 4.05 0x5be438e0  Copyright (C) 1994-2011 H. Peter Anvin et al
+LoLaodaidnign gl ilniunxu.x..........
+.
+LoLaodaidnign gi niintirtdr.d.....reraedayd.y
+.
+iPXE (http://ipxe.org) 00:0D.0 D400 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D400
+
+
+
+
+
+iPXE (http://ipxe.org) 00:0E.0 D500 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D500
+
+
+
+
+
+iPXE (http://ipxe.org) 00:0F.0 D600 PCI2.10 PnP PMM 7EFD18F0 7EF318F0 D600
+[    5.339673] Running e2fsck on: /mnt/flash
+[    5.367432] e2fsck on /mnt/flash took 0s
+
+
+Aboot 8.0.1
+
+
+Press Control-C now to enter Aboot shell
+Booting flash:/vEOS-lab.swi
+[   10.004666] kexec_core: Starting new kernel
+[    0.083549] dmamem: Failed to allocate CMA
+[    5.727501] Running e2fsck on: /mnt/flash
+[    5.754636] e2fsck on /mnt/flash took 0s
+Switching rootfs
+
+Welcome to Arista Networks EOS 4.29.2F
+Architecture: x86_64
+Starting ProcMgr: Removing all files in all subdirs of /etc/ProcMgr.d/run
+[  OK  ]
+Starting EOS initialization stage 1: [  OK  ]
+Starting NorCal initialization: Starting EOS Cloud Init: [  OK  ]
+[  OK  ]
+Starting EOS initialization stage 2: [  OK  ]
+Completing EOS initialization (press ESC to skip): [  OK  ]
+Model and Serial Number: unknown
+System RAM: 2005420 kB
+Flash Memory size:  3.9G
+
+Leaf1 login: admin
+Leaf1>en
+Leaf1#
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel 10
+Leaf1(config-if-Po10)#lacp system-id 02aa.aaaa.0001
+Leaf1(config-if-Po10)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-if-Po10)#end
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#clear bgp all
+% Invalid input
+Leaf1#clear bgp all ?
+% Unrecognized command
+Leaf1#clear bgp ?
+  A.B.C.D                    Neighbor IPv4 address
+  A.B.C.D/E                  Neighbors covered by prefix
+  A:B:C:D:E:F:G:H            Neighbor IPv6 address
+  A:B:C:D:E:F:G:H/I          Neighbors covered by prefix
+  access-list                Configure access control list
+  counters                   Reset the peer counters
+  errors                     Reset the error statistics
+  evpn                       Evpn
+  fe80::A:B:C:D%<interface>  Neighbor IPv6 link-local address
+  history                    Neighbor history
+  in                         Send a route refresh message
+  ipv4                       IPv4 config commands
+  ipv6                       IPv6 config commands
+  monitoring                 BGP monitoring
+  neighbor                   Clear based on transport address family
+  out                        Send all routes to the peer
+  peer-group                 BGP peer group information
+  reason                     Hard reset reason to be sent to the peers
+  rpki                       Resource Public Key Infrastructure
+  soft                       Do not reset the session
+  vrf                        VRF name
+  *                          Clear all IPv4 and IPv6 peering sessions (Use
+                             neighbor * to clear only IPv4 or IPv6 sessions)
+  <cr>
+
+Leaf1#clear bgp
+! Peerings for all neighbors were hard reset
+Leaf1#Jun  9 13:38:39 Leaf1 Bgp: %BGP-3-NOTIFICATION: sent to neighbor 111.111.111.111 (VRF default AS 65100) 6/4 (Cease/administrative reset <Hard Reset>) reason:
+Jun  9 13:38:39 Leaf1 Bgp: %BGP-3-NOTIFICATION: sent to neighbor 222.1.1.1 (VRF default AS 65100) 6/4 (Cease/administrative reset <Hard Reset>) reason:
+Jun  9 13:38:39 Leaf1 Bgp: %BGP-3-NOTIFICATION: sent to neighbor 111.1.1.1 (VRF default AS 65100) 6/4 (Cease/administrative reset <Hard Reset>) reason:
+Jun  9 13:38:39 Leaf1 Bgp: %BGP-3-NOTIFICATION: sent to neighbor 222.222.222.222 (VRF default AS 65100) 6/4 (Cease/administrative reset <Hard Reset>) reason:
+
+Leaf1#
+Leaf1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Neighbor                 AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+--------------- ----------- ------------- ----------------------- -------------- ---------- ----------
+111.1.1.1             65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   L2VPN EVPN              Negotiated              4          4
+222.1.1.1             65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   L2VPN EVPN              Negotiated              4          4
+Leaf1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Neighbor                 AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+--------------- ----------- ------------- ----------------------- -------------- ---------- ----------
+111.1.1.1             65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   L2VPN EVPN              Negotiated              4          4
+222.1.1.1             65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   L2VPN EVPN              Negotiated              4          4
+Leaf1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Neighbor                 AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+--------------- ----------- ------------- ----------------------- -------------- ---------- ----------
+111.1.1.1             65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   IPv4 Unicast            Negotiated             13         13
+111.111.111.111       65100 Established   L2VPN EVPN              Negotiated              4          4
+222.1.1.1             65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   IPv4 Unicast            Negotiated             14         14
+222.222.222.222       65100 Established   L2VPN EVPN              Negotiated              4          4
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+Leaf1#show running-config
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:00:12:12
+   lacp system-id 02aa.aaaa.0001
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#configure t
+Leaf1(config)#router bgp 65001
+Leaf1(config-router-bgp)#
+Leaf1(config-router-bgp)#vlan 10
+Leaf1(config-macvrf-10)#rd auto
+Leaf1(config-macvrf-10)#route-target both 1:1010
+Leaf1(config-macvrf-10)#redistribute learned
+Leaf1(config-macvrf-10)#end
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0000:1212 1.1.1.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1212 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1212 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+Leaf1#copy running-config startup-config
+Copy completed successfully.
+Leaf1#configure t
+Leaf1(config)#interface Ethernet 11
+Leaf1(config-if-Et11)#shut
+Leaf1(config-if-Et11)#no shut
+Leaf1(config-if-Et11)#
+Leaf1#copy running-config startup-config
+Copy completed successfully.
+Leaf1#configure t
+Leaf1(config)#interface Ethernet 11
+Leaf1(config-if-Et11)#shutdown
+Leaf1(config-if-Et11)#no shutdown
+Leaf1(config-if-Et11)#end
+Leaf1#configure t
+Leaf1(config)#router bgp 65001
+Leaf1(config-router-bgp)#vlan 20
+Leaf1(config-macvrf-20)#rd auto
+Leaf1(config-macvrf-20)#route-target both 1:1020
+Leaf1(config-macvrf-20)#redistribute learned
+Leaf1(config-macvrf-20)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-macvrf-20)#interface Vlan 20
+Leaf1(config-if-Vl20)#ip virtual-router address 192.168.20.254/24
+! Virtual router subnets overlapping an interface subnet are not supported
+Leaf1(config-if-Vl20)#end
+Leaf1#configure t
+Leaf1(config)#interface Port-Channel20
+Leaf1(config-if-Po20)#   switchport mode trunk
+Leaf1(config-if-Po20)#   !
+Leaf1(config-if-Po20)#   evpn ethernet-segment
+Leaf1(config-evpn-es)#      identifier 0000:0000:0000:0000:1313
+Leaf1(config-evpn-es)#      designated-forwarder election hold-time 20
+Leaf1(config-evpn-es)#      route-target import 00:00:00:00:13:13
+Leaf1(config-evpn-es)#   lacp system-id 02aa.aaaa.0002
+Leaf1(config-if-Po20)#!
+Leaf1(config-if-Po20)#end
+Leaf1#copy running-config startup-config
+Copy completed successfully.
+Leaf1#show interfaces Port-Channel 20
+Port-Channel20 is down, line protocol is lowerlayerdown (notconnect)
+  Hardware is Port-Channel, address is 0000.0000.0000
+  Ethernet MTU 9214 bytes
+  Full-duplex, Unconfigured
+  Active members in this channel: 0
+  Fallback mode is: off
+  Down 30 seconds
+  1 link status changes since last clear
+  Last clearing of "show interface" counters never
+  5 minutes input rate 0 bps (- with framing overhead), 0 packets/sec
+  5 minutes output rate 0 bps (- with framing overhead), 0 packets/sec
+     0 packets input, 0 bytes
+     Received 0 broadcasts, 0 multicast
+     0 input errors, 0 input discards
+     0 packets output, 0 bytes
+     Sent 0 broadcasts, 0 multicast
+     0 output errors, 0 output discards
+Leaf1#configure t
+Leaf1(config)#interface Ethernet12
+Leaf1(config-if-Et12)#   switchport mode trunk
+Leaf1(config-if-Et12)#   channel-group 20 mode active
+Leaf1(config-if-Et12)#!
+Leaf1(config-if-Et12)#
+Leaf1(config-if-Et12)#copy running-config startup-config
+Copy completed successfully.
+Leaf1(config-if-Et12)#show interfaces Port-Channel 10
+Port-Channel10 is up, line protocol is up (connected)
+  Hardware is Port-Channel, address is 504a.a900.3e0b
+  Ethernet MTU 9214 bytes, BW 1000000 kbit
+  Full-duplex, 1Gb/s
+  Active members in this channel: 1
+  ... Ethernet11 , Full-duplex, 1Gb/s
+  Fallback mode is: off
+  Up 11 minutes, 32 seconds
+  10 link status changes since last clear
+  Last clearing of "show interface" counters never
+  5 minutes input rate 0 bps (0.0% with framing overhead), 0 packets/sec
+  5 minutes output rate 0 bps (0.0% with framing overhead), 0 packets/sec
+     209 packets input, 26816 bytes
+     Received 18 broadcasts, 36 multicast
+     0 input errors, 0 input discards
+     1928 packets output, 243831 bytes
+     Sent 64 broadcasts, 1772 multicast
+     0 output errors, 0 output discards
+Leaf1(config-if-Et12)#end
+Leaf1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:20 auto-discovery 0 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >Ec    RD: 2.2.2.2:20 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:20 auto-discovery 0 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0000:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1212
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:10 auto-discovery 0 0000:0000:0000:0000:1313
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:20 auto-discovery 0 0000:0000:0000:0000:1313
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:10 auto-discovery 0 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >Ec    RD: 2.2.2.2:20 auto-discovery 0 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:20 auto-discovery 0 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0000:1313
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 auto-discovery 0000:0000:0000:0000:1313
+                                 2.2.2.2               -       100     0       65100 65002 i
+Leaf1#show bgp evpn ?
+  community        BGP routes filtered by communities
+  detail           Detailed view
+  domain           Filter by route domain
+  esi              Filter by Ethernet Segment Identifier
+  extcommunity     Match BGP/VPN extended community list
+  host-flap        MAC addresses blacklisted due to duplication
+  instance         EVPN instance
+  large-community  BGP routes filtered by large community
+  multicast        Filter by multicast group and/or source
+  next-hop         Filter by next hop (remote VTEP) IPv4 or IPv6 address
+  rd               Filter by route distinguisher
+  route-type       Filter by NLRI route type
+  sanity           EVPN Sanity
+  summary          Summarized BGP information
+  vni              Filter by VXLAN network identifier
+  >                Redirect output to URL
+  >>               Append redirected output to URL
+  |                Command output pipe filters
+  <cr>
+
+Leaf1#show bgp evpn route-type ?
+  auto-discovery    Filter by Ethernet auto-discovery (A-D) route (type 1)
+  ethernet-segment  Filter by Ethernet segment route (type 4)
+  imet              Filter by inclusive multicast Ethernet tag route (type 3)
+  ip-prefix         Filter by IP prefix route (type 5)
+  join-sync         Filter by multicast join sync route (type 7)
+  leave-sync        Filter by multicast leave sync route (type 8)
+  mac-ip            Filter by MAC/IP advertisement route (type 2)
+  smet              Filter by selective multicast Ethernet tag route (type 6)
+  spmsi             Filter by selective PMSI auto discovery route (type 10)
+
+Leaf1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0000:1212 1.1.1.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1212 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1212 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0000:1313 1.1.1.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1313 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 2.2.2.2:1 ethernet-segment 0000:0000:0000:0000:1313 2.2.2.2
+                                 2.2.2.2               -       100     0       65100 65002 i
+Leaf1#
+show run
+! Command: show running-config
+! device: Leaf1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf1
+!
+spanning-tree mode mstp
+!
+vlan 10
+   name Vlan10
+!
+vlan 20
+   name Vlan20
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1212
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:00:12:12
+   lacp system-id 02aa.aaaa.0001
+!
+interface Port-Channel20
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0000:1313
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:00:13:13
+   lacp system-id 02aa.aaaa.0002
+!
+interface Ethernet1
+   no switchport
+   ip address 111.1.1.2/30
+!
+interface Ethernet2
+   no switchport
+   ip address 222.1.1.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+   channel-group 20 mode active
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 1.1.1.11/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan10
+   vrf VXLAN
+   ip address 192.168.10.100/24
+   ip virtual-router address 192.168.10.254/24
+   mac address virtual-router
+!
+interface Vlan20
+   vrf VXLAN
+   ip address 192.168.20.100/24
+   ip virtual-router address 192.168.20.254/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 12:12:12:12:12:12
+   vxlan udp-port 4789
+   vxlan vlan 10 vni 10010
+   vxlan vlan 20 vni 10020
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 20:20:20:20:20:20
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65001
+   router-id 1.1.1.1
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65100
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65100
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 111.1.1.1 peer group SPINES
+   neighbor 111.111.111.111 peer group SPINES-EVPN
+   neighbor 222.1.1.1 peer group SPINES
+   neighbor 222.222.222.222 peer group SPINES-EVPN
+   redistribute connected
+   !
+   vlan 10
+      rd auto
+      route-target both 1:1010
+      redistribute learned
+   !
+   vlan 20
+      rd auto
+      route-target both 1:1020
+      redistribute learned
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 65100:10100
+      route-target export evpn 65100:10100
+      redistribute connected
+!
+end
+Leaf1#
