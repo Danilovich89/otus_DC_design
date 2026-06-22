@@ -1,0 +1,88 @@
+
+Spine2-s1#show running-config
+! Command: show running-config
+! device: Spine2-s1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Spine2-s1
+!
+spanning-tree mode mstp
+!
+interface Ethernet1
+   no switchport
+   ip address 10.2.1.1/30
+!
+interface Ethernet2
+   no switchport
+   ip address 10.2.2.1/30
+!
+interface Ethernet3
+   no switchport
+   ip address 10.2.3.1/30
+!
+interface Ethernet4
+   no switchport
+   ip address 10.2.4.1/30
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+!
+interface Ethernet12
+!
+interface Loopback0
+   ip address 1.222.222.222/32
+!
+interface Management1
+!
+ip routing
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PS_AS_RANGE
+   10 match as-range 65000-65010 result accept
+!
+router bgp 65100
+   router-id 1.222.222.222
+   maximum-paths 4 ecmp 4
+   bgp listen range 10.0.0.0/8 peer-group LEAFS peer-filter PF_AS_RANGE
+   bgp listen range 1.0.0.0/8 peer-group LEAFS-EVPN peer-filter PS_AS_RANGE
+   neighbor LEAFS peer group
+   neighbor LEAFS bfd
+   neighbor LEAFS timers 1 3
+   neighbor LEAFS-EVPN peer group
+   neighbor LEAFS-EVPN update-source Loopback0
+   neighbor LEAFS-EVPN bfd
+   neighbor LEAFS-EVPN ebgp-multihop 3
+   neighbor LEAFS-EVPN timers 1 3
+   neighbor LEAFS-EVPN send-community extended
+   redistribute connected
+   !
+   address-family evpn
+      no neighbor LEAFS activate
+      neighbor LEAFS-EVPN activate
+   !
+   address-family ipv4
+      neighbor LEAFS activate
+      redistribute connected route-map RM_RED_L0
+!
+end

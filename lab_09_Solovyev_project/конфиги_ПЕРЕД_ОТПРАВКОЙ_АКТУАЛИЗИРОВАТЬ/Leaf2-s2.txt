@@ -1,0 +1,167 @@
+Leaf2-s2#
+Leaf2-s2#sh running-config
+! Command: show running-config
+! device: Leaf1-s2 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf2-s2
+!
+spanning-tree mode mstp
+!
+vlan 210
+   name Vlan210
+!
+vlan 220
+   name Vlan220
+!
+vlan 100
+!
+vrf instance VXLAN
+!
+interface Port-Channel10
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0002:1212
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:02:12:12
+   lacp system-id 02aa.0002.1212
+!
+interface Port-Channel20
+   switchport mode trunk
+   !
+   evpn ethernet-segment
+      identifier 0000:0000:0000:0002:1313
+      designated-forwarder election hold-time 20
+      route-target import 00:00:00:02:13:13
+   lacp system-id 02aa.0002.1313
+!
+interface Ethernet1
+   description to_Spine1-s2
+   no switchport
+   ip address 20.1.2.2/30
+!
+interface Ethernet2
+   description to_Spine2-s2
+   no switchport
+   ip address 20.2.2.2/30
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Ethernet5
+!
+interface Ethernet6
+!
+interface Ethernet7
+!
+interface Ethernet8
+!
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+   switchport mode trunk
+   channel-group 10 mode active
+!
+interface Ethernet12
+   switchport mode trunk
+   channel-group 20 mode active
+!
+interface Loopback0
+   ip address 2.2.2.2/32
+!
+interface Management1
+!
+interface Vlan1
+!
+interface Vlan210
+   vrf VXLAN
+   ip address 192.168.210.100/24
+   ip virtual-router address 192.168.210.254/24
+   mac address virtual-router
+!
+interface Vlan220
+   vrf VXLAN
+   ip address 192.168.220.100/24
+   ip virtual-router address 192.168.220.254/24
+   mac address virtual-router
+!
+interface Vlan100
+   vrf VXLAN
+!
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan virtual-router encapsulation mac-address 00:00:00:02:00:02
+   vxlan udp-port 4789
+   vxlan vlan 210 vni 10210
+   vxlan vlan 220 vni 10220
+   vxlan vrf VXLAN vni 10100
+!
+ip virtual-router mac-address 00:00:00:02:00:12
+!
+ip routing
+ip routing vrf VXLAN
+!
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65100 result accept
+!
+router bgp 65102
+   router-id 2.2.2.2
+   rd auto
+   maximum-paths 4 ecmp 4
+   neighbor SPINES peer group
+   neighbor SPINES remote-as 65200
+   neighbor SPINES bfd
+   neighbor SPINES timers 1 3
+   neighbor SPINES send-community extended
+   neighbor SPINES-EVPN peer group
+   neighbor SPINES-EVPN remote-as 65200
+   neighbor SPINES-EVPN update-source Loopback0
+   neighbor SPINES-EVPN bfd
+   neighbor SPINES-EVPN ebgp-multihop 3
+   neighbor SPINES-EVPN timers 1 3
+   neighbor SPINES-EVPN send-community extended
+   neighbor 2.111.111.111 peer group SPINES-EVPN
+   neighbor 2.222.222.222 peer group SPINES-EVPN
+   neighbor 20.1.2.1 peer group SPINES
+   neighbor 20.2.2.1 peer group SPINES
+   redistribute connected
+   !
+   vlan 210
+      rd auto
+      route-target both 1:1010
+      redistribute learned
+   !
+   vlan 220
+      rd auto
+      route-target both 1:1020
+      redistribute learned
+   !
+   address-family evpn
+      no neighbor SPINES activate
+      neighbor SPINES-EVPN activate
+   !
+   address-family ipv4
+      neighbor SPINES activate
+      redistribute connected route-map RM_RED_L0
+   !
+   vrf VXLAN
+      route-target import evpn 10100:10100
+      route-target export evpn 10100:10100
+      redistribute connected
+!
+end

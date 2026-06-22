@@ -1,0 +1,52 @@
+Site2:
+
+CE1:
+sudo hostnamectl set-hostname ce1-s2
+sudo ip link set down ens3
+sudo ip link set down ens4
+sudo ip link add bond0 type bond mode 802.3ad 
+sudo ip link set dev bond0 type bond lacp_active on
+sudo ip link set dev bond0 type bond lacp_rate fast
+sudo ip link set ens3 master bond0
+sudo ip link set ens4 master bond0
+sudo ip link set up ens3
+sudo ip link set up ens4
+sudo ip link add link bond0 name v210.bond0 type vlan id 210
+sudo ip addr add 192.168.210.1/24 dev v210.bond0
+sudo ip link set up bond0
+sudo ip link set up v210.bond0
+sudo ip r add default via 192.168.210.254
+
+CE2:
+sudo hostnamectl set-hostname ce2-s2
+sudo ip link set down ens3
+sudo ip link set down ens4
+sudo ip link add bond0 type bond mode 802.3ad 
+sudo ip link set dev bond0 type bond lacp_active on
+sudo ip link set dev bond0 type bond lacp_rate fast
+sudo ip link set ens3 master bond0
+sudo ip link set ens4 master bond0
+sudo ip link set up ens3
+sudo ip link set up ens4
+sudo ip link add link bond0 name v220.bond0 type vlan id 220
+sudo ip addr add 192.168.220.1/24 dev v220.bond0
+sudo ip link set up bond0
+sudo ip link set up v220.bond0
+sudo ip r add default via 192.168.220.254
+
+CE3:
+sudo hostnamectl set-hostname ce3-s2
+sudo ip link add link ens3 name v230.ens3 type vlan id 230
+sudo ip addr add 192.168.230.1/24 dev v230.ens3
+sudo ip link set up ens3
+sudo ip link set up v230.ens3
+sudo ip r add default via 192.168.230.100
+
+
+CE4:
+sudo hostnamectl set-hostname ce4-s2
+sudo ip link add link ens3 name v240.ens3 type vlan id 240
+sudo ip addr add 192.168.240.1/24 dev v240.ens3
+sudo ip link set up ens3
+sudo ip link set up v240.ens3
+sudo ip r add default via 192.168.240.100
