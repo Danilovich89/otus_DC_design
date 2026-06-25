@@ -1,6 +1,6 @@
-Leaf2-s1#show running-config
+Leaf4-s1#show running-config
 ! Command: show running-config
-! device: Leaf2-s1 (vEOS-lab, EOS-4.29.2F)
+! device: Leaf4-s1 (vEOS-lab, EOS-4.29.2F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -10,9 +10,11 @@ transceiver qsfp default-mode 4x10G
 !
 service routing protocols model multi-agent
 !
-hostname Leaf2-s1
+hostname Leaf4-s1
 !
 spanning-tree mode mstp
+!
+system mac-address 00:00:00:00:00:04
 !
 vlan 10
    name Vlan10
@@ -20,35 +22,19 @@ vlan 10
 vlan 20
    name Vlan20
 !
-vlan 100
+vlan 40,100
 !
 vrf instance VXLAN
 !
-interface Port-Channel10
-   switchport mode trunk
-   !
-   evpn ethernet-segment
-      identifier 0000:0000:0000:0001:1212
-      designated-forwarder election hold-time 20
-      route-target import 00:00:00:01:12:12
-   lacp system-id 02aa.0001.1212
-!
-interface Port-Channel20
-   switchport mode trunk
-   !
-   evpn ethernet-segment
-      identifier 0000:0000:0000:0001:1313
-      designated-forwarder election hold-time 20
-      route-target import 00:00:00:01:13:13
-   lacp system-id 02aa.0001.1313
-!
 interface Ethernet1
+   description to_Spine1-s1
    no switchport
-   ip address 10.1.2.2/30
+   ip address 10.1.4.2/30
 !
 interface Ethernet2
+   description to_Spine2-s1
    no switchport
-   ip address 10.2.2.2/30
+   ip address 10.2.4.2/30
 !
 interface Ethernet3
 !
@@ -67,58 +53,34 @@ interface Ethernet9
 interface Ethernet10
 !
 interface Ethernet11
-   switchport mode trunk
-   channel-group 10 mode active
 !
 interface Ethernet12
    switchport mode trunk
-   channel-group 20 mode active
 !
 interface Loopback0
-   ip address 1.2.2.2/32
+   ip address 1.4.4.4/32
 !
 interface Management1
 !
-interface Vlan1
-!
-interface Vlan10
+interface Vlan40
    vrf VXLAN
-   ip address 192.168.10.100/24
-   ip virtual-router address 192.168.10.254/24
-   mac address virtual-router
-!
-interface Vlan20
-   vrf VXLAN
-   ip address 192.168.20.100/24
-   ip virtual-router address 192.168.20.254/24
-   mac address virtual-router
+   ip address 192.168.40.100/24
 !
 interface Vlan100
    vrf VXLAN
 !
 interface Vxlan1
    vxlan source-interface Loopback0
-   vxlan virtual-router encapsulation mac-address 00:00:00:01:00:02
+   vxlan virtual-router encapsulation mac-address 00:00:00:01:00:04
    vxlan udp-port 4789
-   vxlan vlan 10 vni 10010
-   vxlan vlan 20 vni 10020
+   vxlan vlan 40 vni 10040
    vxlan vrf VXLAN vni 10100
-!
-ip virtual-router mac-address 00:00:00:01:00:12
 !
 ip routing
 ip routing vrf VXLAN
 !
-route-map RM_RED_L0 permit 10
-   match interface Loopback0
-   set origin incomplete
-!
-peer-filter PF_AS
-   10 match as-range 65100 result accept
-!
-router bgp 65002
-   router-id 1.2.2.2
-   rd auto
+router bgp 65004
+   router-id 1.4.4.4
    maximum-paths 4 ecmp 4
    neighbor SPINES peer group
    neighbor SPINES remote-as 65100
@@ -134,19 +96,9 @@ router bgp 65002
    neighbor SPINES-EVPN send-community extended
    neighbor 1.111.111.111 peer group SPINES-EVPN
    neighbor 1.222.222.222 peer group SPINES-EVPN
-   neighbor 10.1.2.1 peer group SPINES
-   neighbor 10.2.2.1 peer group SPINES
+   neighbor 10.1.4.1 peer group SPINES
+   neighbor 10.2.4.1 peer group SPINES
    redistribute connected
-   !
-   vlan 10
-      rd auto
-      route-target both 1:1010
-      redistribute learned
-   !
-   vlan 20
-      rd auto
-      route-target both 1:1020
-      redistribute learned
    !
    address-family evpn
       no neighbor SPINES activate
@@ -157,6 +109,7 @@ router bgp 65002
       redistribute connected route-map RM_RED_L0
    !
    vrf VXLAN
+      rd 1.4.4.4:10100
       route-target import evpn 10100:10100
       route-target export evpn 10100:10100
       redistribute connected

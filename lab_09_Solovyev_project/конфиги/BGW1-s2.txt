@@ -1,6 +1,6 @@
-Leaf4-s2#show running-config
+BGW1-s2#show running-config
 ! Command: show running-config
-! device: Leaf4-s2 (vEOS-lab, EOS-4.29.2F)
+! device: BGW1-s2 (vEOS-lab, EOS-4.29.2F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
@@ -10,7 +10,7 @@ transceiver qsfp default-mode 4x10G
 !
 service routing protocols model multi-agent
 !
-hostname Leaf4-s2
+hostname BGW1-s2
 !
 spanning-tree mode mstp
 !
@@ -20,19 +20,19 @@ vlan 10
 vlan 20
    name Vlan20
 !
-vlan 240,100
-!
 vrf instance VXLAN
 !
 interface Ethernet1
    no switchport
-   ip address 20.1.4.2/30
+   ip address 20.1.5.2/30
 !
 interface Ethernet2
    no switchport
-   ip address 20.2.4.2/30
+   ip address 20.2.5.2/30
 !
 interface Ethernet3
+   no switchport
+   ip address 172.17.0.1/30
 !
 interface Ethernet4
 !
@@ -51,34 +51,41 @@ interface Ethernet10
 interface Ethernet11
 !
 interface Ethernet12
-   switchport mode trunk
 !
 interface Loopback0
-   ip address 2.4.4.4/32
+   ip address 2.5.5.5/32
+!
+interface Loopback1
+   ip address 200.200.200.200/32
+!
+interface Loopback2
+   vrf VXLAN
+   ip address 192.2.5.5/32
 !
 interface Management1
 !
-interface Vlan240
-   vrf VXLAN
-   ip address 192.168.240.100/24
-!
-interface Vlan100
-   vrf VXLAN
-!
 interface Vxlan1
-   vxlan source-interface Loopback0
-   vxlan virtual-router encapsulation mac-address 00:00:00:02:00:04
+   vxlan source-interface Loopback1
+   vxlan virtual-router encapsulation mac-address 00:00:00:01:00:66
    vxlan udp-port 4789
-   vxlan vlan 240 vni 10240
    vxlan vrf VXLAN vni 10100
 !
 ip routing
 ip routing vrf VXLAN
 !
-router bgp 65104
-   router-id 2.4.4.4
-   rd auto
-   maximum-paths 4 ecmp 4
+route-map RM_RED_L0 permit 10
+   match interface Loopback0
+   set origin incomplete
+!
+peer-filter PF_AS
+   10 match as-range 65200 result accept
+!
+router bgp 65105
+   router-id 2.5.5.5
+   bgp bestpath d-path
+   neighbor DCI peer group
+   neighbor DCI remote-as 65300
+   neighbor DCI send-community extended
    neighbor SPINES peer group
    neighbor SPINES remote-as 65200
    neighbor SPINES bfd
@@ -93,21 +100,29 @@ router bgp 65104
    neighbor SPINES-EVPN send-community extended
    neighbor 2.111.111.111 peer group SPINES-EVPN
    neighbor 2.222.222.222 peer group SPINES-EVPN
-   neighbor 20.1.4.1 peer group SPINES
-   neighbor 20.2.4.1 peer group SPINES
+   neighbor 20.1.5.1 peer group SPINES
+   neighbor 20.2.5.1 peer group SPINES
+   neighbor 172.17.0.2 peer group DCI
    redistribute connected
    !
    address-family evpn
+      neighbor DCI activate
+      neighbor DCI domain remote
       no neighbor SPINES activate
       neighbor SPINES-EVPN activate
+      domain identifier 65200:1
+      neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain
    !
    address-family ipv4
+      neighbor DCI activate
       neighbor SPINES activate
+      network 2.5.5.5/32
+      network 200.200.200.200/32
       redistribute connected route-map RM_RED_L0
    !
    vrf VXLAN
+      rd 2.5.5.5:10100
       route-target import evpn 10100:10100
       route-target export evpn 10100:10100
-      redistribute connected
 !
 end

@@ -1,9 +1,15 @@
 ### Проектная работа
-Собираем L3 VXLAN/EVPN Multisite
+В данной проектой работе рассматривается архитектура L3 VXLAN/EVPN Multisite для организации сетевой связности между клиентскими приложениями, расположенных физически в разных датацентрах и логически в разных подсетях, с помощью EVPN type 5 маршрутов.
+
+Для обеспечения отказоустойчивости работы наиболее критичных приложений (в данном примере Ce1-s1, Ce2-s1, Ce1-s1, Ce2-s2) собрана схема Anycat Gateway на парах Leaf1-Leaf2 в Site1 и Site2 соответственно.
+Такое включение позволяет минимизировать потери траффика в случае наиболее вероятных сценариев отказа сети: отказ линка, отказ SFP, отказ шасси.
 
 #### Адресация Site-1
 
 ##### Адресация фабрики Site-1
+
+<details>
+<summary>IP Plan Site-1</summary>
 
 ###### Spine-ы Site-1:
 
@@ -78,6 +84,9 @@ CE4-s1|ens3|192.168.40.1|255.255.255.0|to_Leaf4_Eth12 |vlan40
 
 ##### Адресация фабрики Site-2
 
+<details>
+<summary>IP Plan Site-2</summary>
+
 ###### Spine-ы Site-2:
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
@@ -149,7 +158,8 @@ CE2-s2|bond0(ens3+ens4)|192.168.220.1|255.255.255.0|to_Leaf1+Leaf2/Eth12 |vlan22
 CE3-s2|ens3|192.168.230.1|255.255.255.0|to_Leaf3_Eth12 |vlan230
 CE4-s2|ens3|192.168.240.1|255.255.255.0|to_Leaf4_Eth12 |vlan240
 
-##### Router server
+#### Router server
+
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
 RS|Ethernet1|172.16.0.2|255.255.255.252|to_BGW1-s1|65300
@@ -161,31 +171,180 @@ RS|Ethernet4|172.17.0.6|255.255.255.252|to_BGW2-s2|65300
 
 
 #### Конфиги:
-Отдельно в приложенных файлах в папке "конфиги". Конфиги Spine и Leaf3-Leaf4 без изменений.
+Отдельно в приложенных файлах в папке "конфиги".
 
-#### Маршруты:
+#### Intersite BGP-соседства:
+Здесь демонстрируем соседства между сайтами
+<details>
+<summary>show bgp summary</summary>
 
-##### Leaf1 auto-discovery:
+##### Route-server Site1 <-> DCI <-> Site2:
+```
+Route-Server#show bgp summary
+BGP summary information for VRF default
+Router identifier 33.33.33.33, local AS number 65300
+Neighbor            AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+---------- ----------- ------------- ----------------------- -------------- ---------- ----------
+172.16.0.1       65005 Established   IPv4 Unicast            Negotiated             12         12
+172.16.0.1       65005 Established   L2VPN EVPN              Negotiated              6          6
+172.16.0.5       65005 Established   IPv4 Unicast            Negotiated             12         12
+172.16.0.5       65005 Established   L2VPN EVPN              Negotiated              6          6
+172.17.0.1       65105 Established   IPv4 Unicast            Negotiated             12         12
+172.17.0.1       65105 Established   L2VPN EVPN              Negotiated              6          6
+172.17.0.5       65105 Established   IPv4 Unicast            Negotiated             12         12
+172.17.0.5       65105 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
+##### BGW1-s1 Site1 <-> DCI:
+```
+BGW1-s1#show bgp summary | grep 65300
+172.16.0.2          65300 Established   IPv4 Unicast            Negotiated             13         13
+172.16.0.2          65300 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
-##### Leaf2 auto-discovery:
+##### BGW2-s1 Site1 <-> DCI:
 ```
-                        -                     -       -       0       i
-
-```
-
-##### Leaf1 ethernet-segment:
+BGW2-s1#show bgp summary | grep 65300
+172.16.0.6          65300 Established   IPv4 Unicast            Negotiated             13         13
+172.16.0.6          65300 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
+##### BGW1-s2 Site2 <-> DCI:
+```
+BGW1-s2#show bgp summary | grep 65300
+172.17.0.2          65300 Established   IPv4 Unicast            Negotiated             13         13
+172.17.0.2          65300 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
-##### Leaf2 ethernet-segment:
+##### BGW2-s2 Site2 <-> DCI:
+```
+BGW2-s2#show bgp summary | grep 65300
+172.17.0.6          65300 Established   IPv4 Unicast            Negotiated             13         13
+172.17.0.6          65300 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
-                                 -                     -       -       0       i
+#### Intersite BGP-соседства:
+Здесь демонстрируем соседства внутри каждого сайта
+
+<details>
+<summary>show bgp summary</summary>
+
+##### Spine1-s1
 ```
+Spine1-s1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.111.111.111, local AS number 65100
+Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+-------- ----------- ------------- ----------------------- -------------- ---------- ----------
+1.1.1.1        65001 Established   IPv4 Unicast            Negotiated              1          1
+1.1.1.1        65001 Established   L2VPN EVPN              Negotiated             12         12
+1.2.2.2        65002 Established   IPv4 Unicast            Negotiated              1          1
+1.2.2.2        65002 Established   L2VPN EVPN              Negotiated             12         12
+1.3.3.3        65003 Established   IPv4 Unicast            Negotiated              3          3
+1.3.3.3        65003 Established   L2VPN EVPN              Negotiated              1          1
+1.4.4.4        65004 Established   IPv4 Unicast            Negotiated              3          3
+1.4.4.4        65004 Established   L2VPN EVPN              Negotiated              1          1
+1.5.5.5        65005 Established   IPv4 Unicast            Negotiated             15         15
+1.5.5.5        65005 Established   L2VPN EVPN              Negotiated              6          6
+1.6.6.6        65005 Established   IPv4 Unicast            Negotiated             15         15
+1.6.6.6        65005 Established   L2VPN EVPN              Negotiated              6          6
+10.1.1.2       65001 Established   IPv4 Unicast            Negotiated              1          1
+10.1.2.2       65002 Established   IPv4 Unicast            Negotiated              1          1
+10.1.3.2       65003 Established   IPv4 Unicast            Negotiated              3          3
+10.1.4.2       65004 Established   IPv4 Unicast            Negotiated              3          3
+10.1.5.2       65005 Established   IPv4 Unicast            Negotiated             15         15
+10.1.6.2       65005 Established   IPv4 Unicast            Negotiated             15         15
+```
+
+##### Spine2-s1
+```
+Spine2-s1#show bgp summary
+BGP summary information for VRF default
+Router identifier 1.222.222.222, local AS number 65100
+Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+-------- ----------- ------------- ----------------------- -------------- ---------- ----------
+1.1.1.1        65001 Established   IPv4 Unicast            Negotiated              1          1
+1.1.1.1        65001 Established   L2VPN EVPN              Negotiated             12         12
+1.2.2.2        65002 Established   IPv4 Unicast            Negotiated              1          1
+1.2.2.2        65002 Established   L2VPN EVPN              Negotiated             12         12
+1.3.3.3        65003 Established   IPv4 Unicast            Negotiated              3          3
+1.3.3.3        65003 Established   L2VPN EVPN              Negotiated              1          1
+1.4.4.4        65004 Established   IPv4 Unicast            Negotiated              3          3
+1.4.4.4        65004 Established   L2VPN EVPN              Negotiated              1          1
+1.5.5.5        65005 Established   IPv4 Unicast            Negotiated             15         15
+1.5.5.5        65005 Established   L2VPN EVPN              Negotiated              6          6
+1.6.6.6        65005 Established   IPv4 Unicast            Negotiated             15         15
+1.6.6.6        65005 Established   L2VPN EVPN              Negotiated              6          6
+10.2.1.2       65001 Established   IPv4 Unicast            Negotiated              1          1
+10.2.2.2       65002 Established   IPv4 Unicast            Negotiated              1          1
+10.2.3.2       65003 Established   IPv4 Unicast            Negotiated              3          3
+10.2.4.2       65004 Established   IPv4 Unicast            Negotiated              3          3
+10.2.5.2       65005 Established   IPv4 Unicast            Negotiated             15         15
+10.2.6.2       65005 Established   IPv4 Unicast            Negotiated             15         15
+```
+
+
+##### Spine1-s2
+```
+Spine1-s2#show bgp summary
+BGP summary information for VRF default
+Router identifier 2.111.111.111, local AS number 65200
+Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+-------- ----------- ------------- ----------------------- -------------- ---------- ----------
+2.1.1.1        65101 Established   IPv4 Unicast            Negotiated              1          1
+2.1.1.1        65101 Established   L2VPN EVPN              Negotiated             12         12
+2.2.2.2        65102 Established   IPv4 Unicast            Negotiated              1          1
+2.2.2.2        65102 Established   L2VPN EVPN              Negotiated             11         11
+2.3.3.3        65103 Established   IPv4 Unicast            Negotiated              3          3
+2.3.3.3        65103 Established   L2VPN EVPN              Negotiated              1          1
+2.4.4.4        65104 Established   IPv4 Unicast            Negotiated              3          3
+2.4.4.4        65104 Established   L2VPN EVPN              Negotiated              1          1
+2.5.5.5        65105 Established   IPv4 Unicast            Negotiated             15         15
+2.5.5.5        65105 Established   L2VPN EVPN              Negotiated              6          6
+2.6.6.6        65105 Established   IPv4 Unicast            Negotiated             15         15
+2.6.6.6        65105 Established   L2VPN EVPN              Negotiated              6          6
+20.1.1.2       65101 Established   IPv4 Unicast            Negotiated              1          1
+20.1.2.2       65102 Established   IPv4 Unicast            Negotiated              1          1
+20.1.3.2       65103 Established   IPv4 Unicast            Negotiated              3          3
+20.1.4.2       65104 Established   IPv4 Unicast            Negotiated              3          3
+20.1.5.2       65105 Established   IPv4 Unicast            Negotiated             15         15
+20.1.6.2       65105 Established   IPv4 Unicast            Negotiated             15         15
+```
+
+##### Spine2-s2
+```
+Spine2-s2#show bgp summary
+BGP summary information for VRF default
+Router identifier 2.222.222.222, local AS number 65200
+Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
+-------- ----------- ------------- ----------------------- -------------- ---------- ----------
+2.1.1.1        65101 Established   IPv4 Unicast            Negotiated              1          1
+2.1.1.1        65101 Established   L2VPN EVPN              Negotiated             11         11
+2.2.2.2        65102 Established   IPv4 Unicast            Negotiated              1          1
+2.2.2.2        65102 Established   L2VPN EVPN              Negotiated             11         11
+2.3.3.3        65103 Established   IPv4 Unicast            Negotiated              3          3
+2.3.3.3        65103 Established   L2VPN EVPN              Negotiated              1          1
+2.4.4.4        65104 Established   IPv4 Unicast            Negotiated              3          3
+2.4.4.4        65104 Established   L2VPN EVPN              Negotiated              1          1
+2.5.5.5        65105 Established   IPv4 Unicast            Negotiated             15         15
+2.5.5.5        65105 Established   L2VPN EVPN              Negotiated              6          6
+2.6.6.6        65105 Established   IPv4 Unicast            Negotiated             15         15
+2.6.6.6        65105 Established   L2VPN EVPN              Negotiated              6          6
+20.2.1.2       65101 Established   IPv4 Unicast            Negotiated              1          1
+20.2.2.2       65102 Established   IPv4 Unicast            Negotiated              1          1
+20.2.3.2       65103 Established   IPv4 Unicast            Negotiated              3          3
+20.2.4.2       65104 Established   IPv4 Unicast            Negotiated              3          3
+20.2.5.2       65105 Established   IPv4 Unicast            Negotiated             15         15
+20.2.6.2       65105 Established   IPv4 Unicast            Negotiated             15         15
+```
+
+
+#### EVPN-маршруты type 5
+<details>
+<summary>show bgp evpn ip-prefix ipv4</summary>
+
+
+#### EVPN-маршруты type 1, type 4 (Anycast GW)
 
 
 

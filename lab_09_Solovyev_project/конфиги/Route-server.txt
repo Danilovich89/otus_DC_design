@@ -1,13 +1,10 @@
-
-Route-Server(config)#sh run | no-more 
+Route-Server#show running-config
 ! Command: show running-config
-! device: Route-Server (vEOS-lab, EOS-4.33.1F)
+! device: Route-Server (vEOS-lab, EOS-4.29.2F)
 !
 ! boot system flash:/vEOS-lab.swi
 !
 no aaa root
-!
-no service interface inactive port-id allocation disabled
 !
 transceiver qsfp default-mode 4x10G
 !
@@ -16,10 +13,6 @@ service routing protocols model multi-agent
 hostname Route-Server
 !
 spanning-tree mode mstp
-!
-system l1
-   unsupported speed action error
-   unsupported error-correction action error
 !
 interface Ethernet1
    no switchport
@@ -45,6 +38,14 @@ interface Ethernet7
 !
 interface Ethernet8
 !
+interface Ethernet9
+!
+interface Ethernet10
+!
+interface Ethernet11
+!
+interface Ethernet12
+!
 interface Management1
 !
 ip routing
@@ -57,24 +58,19 @@ router bgp 65300
    neighbor 172.16.0.1 peer group BGW
    neighbor 172.16.0.1 remote-as 65005
    neighbor 172.16.0.5 peer group BGW
-   neighbor 172.16.0.5 remote-as 65006
+   neighbor 172.16.0.5 remote-as 65005
    neighbor 172.17.0.1 peer group BGW
    neighbor 172.17.0.1 remote-as 65105
    neighbor 172.17.0.5 peer group BGW
-   neighbor 172.17.0.5 remote-as 65106
+   neighbor 172.17.0.5 remote-as 65105
    !
    address-family evpn
       neighbor BGW activate
       neighbor BGW next-hop-unchanged
+      neighbor BGW domain remote
+      domain identifier 65300:1
    !
    address-family ipv4
       neighbor BGW activate
-!
-router multicast
-   ipv4
-      software-forwarding kernel
-   !
-   ipv6
-      software-forwarding kernel
 !
 end

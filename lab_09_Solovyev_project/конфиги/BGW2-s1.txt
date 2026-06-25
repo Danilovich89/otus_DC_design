@@ -1,3 +1,9 @@
+BGW2-s1#show running-config
+! Command: show running-config
+! device: BGW2-s1 (vEOS-lab, EOS-4.29.2F)
+!
+! boot system flash:/vEOS-lab.swi
+!
 no aaa root
 !
 transceiver qsfp default-mode 4x10G
@@ -17,7 +23,6 @@ vlan 20
 vrf instance VXLAN
 !
 interface Ethernet1
-   description
    no switchport
    ip address 10.1.6.2/30
 !
@@ -55,16 +60,14 @@ interface Loopback1
 !
 interface Loopback2
    vrf VXLAN
-   ip address 100.64.0.2/32
+   ip address 192.1.6.6/32
 !
 interface Management1
 !
 interface Vxlan1
    vxlan source-interface Loopback1
-   vxlan virtual-router encapsulation mac-address 00:00:00:01:00:06
+   vxlan virtual-router encapsulation mac-address 00:00:00:01:00:55
    vxlan udp-port 4789
-   vxlan vlan 10 vni 10010
-   vxlan vlan 20 vni 10020
    vxlan vrf VXLAN vni 10100
 !
 ip routing
@@ -77,10 +80,9 @@ route-map RM_RED_L0 permit 10
 peer-filter PF_AS
    10 match as-range 65100 result accept
 !
-router bgp 65006
+router bgp 65005
    router-id 1.6.6.6
    rd auto
-   no bgp default ipv4-unicast
    bgp bestpath d-path
    neighbor DCI peer group
    neighbor DCI remote-as 65300
@@ -104,34 +106,23 @@ router bgp 65006
    neighbor 172.16.0.6 peer group DCI
    redistribute connected
    !
-   vlan 10
-      rd auto
-      route-target both 1:1010
-      redistribute learned
-   !
-   vlan 20
-      rd auto
-      route-target both 1:1020
-      redistribute learned
-   !
    address-family evpn
       neighbor DCI activate
-	  neighbor DCI domain remote
+      neighbor DCI domain remote
       neighbor SPINES-EVPN activate
-	  domain identifier 65006:1
-	  domain identifier 65300:1 remote
-	  neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain
+      domain identifier 65100:1
+      neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain
    !
    address-family ipv4
       neighbor DCI activate
-	  network 1.6.6.6/32
-	  network 100.100.100.100/32
       neighbor SPINES activate
+      network 1.6.6.6/32
+      network 100.100.100.100/32
       redistribute connected route-map RM_RED_L0
    !
    vrf VXLAN
-      route-target import evpn 65100:10100
-      route-target export evpn 65100:10100
-      redistribute connected
+      rd 1.6.6.6:10100
+      route-target import evpn 10100:10100
+      route-target export evpn 10100:10100
 !
 end
