@@ -161,6 +161,9 @@ CE4-s2|ens3|192.168.240.1|255.255.255.0|to_Leaf4_Eth12 |vlan240
 
 #### Router server
 
+<details>
+<summary>DCI IP-plan</summary>
+
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
 RS|Ethernet1|172.16.0.2|255.255.255.252|to_BGW1-s1|65300
@@ -168,11 +171,12 @@ RS|Ethernet2|172.16.0.6|255.255.255.252|to_BGW2-s1|65300
 RS|Ethernet3|172.17.0.2|255.255.255.252|to_BGW1-s2|65300
 RS|Ethernet4|172.17.0.6|255.255.255.252|to_BGW2-s2|65300
 
-
+</details>
 
 
 #### Конфиги:
-Отдельно в приложенных файлах в папке "конфиги".
+Отдельно в приложенных файлах в папке "конфиги":
+(https://github.com/Danilovich89/otus_DC_design/tree/main/lab_09_Solovyev_project/конфиги)
 
 #### Intersite BGP-соседства:
 Здесь демонстрируем соседства между сайтами
@@ -347,6 +351,175 @@ Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI
 <details>
 <summary>show bgp evpn route-type ip-prefix ipv4</summary>
 
+Для примера взят маршрут CE4-s1 <-> Leaf4-s1 <> BGW2-s1 <> Route-Server <> BGW2-s2 <> Leaf4-s2 <> CE4-s2
+Где адреса клиентов и VTEPов:
+```
+CE4-s1: 192.168.40.1/24
+Leaf4-s1: 1.4.4.4
+BGW2-s1
+BGW2-s2
+Leaf4-s2
+CE4-s2: 192.168.240.1/24
+```
+
+##### Leaf4-s1
+
+```
+Leaf4-s1#show bgp evpn route-type ip-prefix ipv4 rd 1.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 1.4.4.4, local AS number 65004
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 -                     -       -       0       i
+Leaf4-s1#show bgp evpn route-type ip-prefix ipv4 rd 2.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 1.4.4.4, local AS number 65004
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >Ec    RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 100.100.100.100       -       100     0       65100 65005 65300 65105 65200 65104 i
+ *  ec    RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 100.100.100.100       -       100     0       65100 65005 65300 65105 65200 65104 i
+```
+
+##### BGW2-s1
+
+```
+BGW2-s1#show bgp evpn route-type ip-prefix ipv4 rd 1.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 1.6.6.6, local AS number 65005
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 1.4.4.4               -       100     0       65100 65004 i
+ *        RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 1.4.4.4               -       100     0       65100 65004 i
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24 remote
+                                 1.4.4.4               -       100     0       65100 65004 i
+ *        RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24 remote
+                                 1.4.4.4               -       100     0       65100 65004 i
+BGW2-s1#show bgp evpn route-type ip-prefix ipv4 rd 2.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 1.6.6.6, local AS number 65005
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 200.200.200.200       -       100     0       65300 65105 65200 65104 i
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24 remote
+                                 200.200.200.200       -       100     0       65300 65105 65200 65104 i
+```
+
+##### Route-server
+
+```
+Route-Server#show bgp evpn route-type ip-prefix ipv4 rd 1.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 33.33.33.33, local AS number 65300
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24 remote
+                                 100.100.100.100       -       100     0       65005 65100 65004 i
+ *        RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24 remote
+                                 100.100.100.100       -       100     0       65005 65100 65004 i
+Route-Server#show bgp evpn route-type ip-prefix ipv4 rd 2.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 33.33.33.33, local AS number 65300
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24 remote
+                                 200.200.200.200       -       100     0       65105 65200 65104 i
+ *        RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24 remote
+                                 200.200.200.200       -       100     0       65105 65200 65104 i
+```
+
+##### BGW2-s2
+
+```
+BGW2-s2#show bgp evpn route-type ip-prefix ipv4 rd 1.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 2.6.6.6, local AS number 65105
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 100.100.100.100       -       100     0       65300 65005 65100 65004 i
+ * >      RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24 remote
+                                 100.100.100.100       -       100     0       65300 65005 65100 65004 i
+BGW2-s2#show bgp evpn route-type ip-prefix ipv4 rd 2.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 2.6.6.6, local AS number 65105
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 2.4.4.4               -       100     0       65200 65104 i
+ *        RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 2.4.4.4               -       100     0       65200 65104 i
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24 remote
+                                 2.4.4.4               -       100     0       65200 65104 i
+ *        RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24 remote
+                                 2.4.4.4               -       100     0       65200 65104 i
+```
+
+##### Leaf4-s2
+
+```
+Leaf4-s2#show bgp evpn route-type ip-prefix ipv4 rd 1.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 2.4.4.4, local AS number 65104
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >Ec    RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 200.200.200.200       -       100     0       65200 65105 65300 65005 65100 65004 i
+ *  ec    RD: 1.4.4.4:10100 ip-prefix 192.168.40.0/24
+                                 200.200.200.200       -       100     0       65200 65105 65300 65005 65100 65004 i
+Leaf4-s2#show bgp evpn route-type ip-prefix ipv4 rd 2.4.4.4:10100
+BGP routing table information for VRF default
+Router identifier 2.4.4.4, local AS number 65104
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 2.4.4.4:10100 ip-prefix 192.168.240.0/24
+                                 -                     -       -       0       i
+```
 
 </details>
 
@@ -355,10 +528,150 @@ Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI
 <details>
 <summary>show bgp evpn route-type ethernet-segment</summary>
 
+
+На примере пары Leaf1-s1/Leaf2-s1. Для Site2 аналогично.
+
+##### Leaf1-s1
+
+```
+Leaf1-s1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10010 auto-discovery 0 0000:0000:0000:0001:1212
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1212
+                                 -                     -       -       0       i
+ * >Ec    RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1212
+                                 1.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1212
+                                 1.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.2.2.2:10020 auto-discovery 0 0000:0000:0000:0001:1313
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1313
+                                 -                     -       -       0       i
+ * >Ec    RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1313
+                                 1.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1313
+                                 1.2.2.2               -       100     0       65100 65002 i
+Leaf1-s1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1212 1.1.1.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1212 1.2.2.2
+                                 1.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1212 1.2.2.2
+                                 1.2.2.2               -       100     0       65100 65002 i
+ * >      RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1313 1.1.1.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1313 1.2.2.2
+                                 1.2.2.2               -       100     0       65100 65002 i
+ *  ec    RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1313 1.2.2.2
+                                 1.2.2.2               -       100     0       65100 65002 i
+
+```
+
+
+##### Leaf2-s1
+
+```
+Leaf2-s1#show bgp evpn route-type auto-discovery
+BGP routing table information for VRF default
+Router identifier 1.2.2.2, local AS number 65002
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10010 auto-discovery 0 0000:0000:0000:0001:1212
+                                 -                     -       -       0       i
+ *  Ec    RD: 1.1.1.1:10010 auto-discovery 0 0000:0000:0000:0001:1212
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.1.1.1:10010 auto-discovery 0 0000:0000:0000:0001:1212
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >Ec    RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1212
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1212
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >      RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1212
+                                 -                     -       -       0       i
+ * >      RD: 1.2.2.2:10020 auto-discovery 0 0000:0000:0000:0001:1313
+                                 -                     -       -       0       i
+ *  Ec    RD: 1.2.2.2:10020 auto-discovery 0 0000:0000:0000:0001:1313
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.2.2.2:10020 auto-discovery 0 0000:0000:0000:0001:1313
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >Ec    RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1313
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.1.1.1:1 auto-discovery 0000:0000:0000:0001:1313
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >      RD: 1.2.2.2:1 auto-discovery 0000:0000:0000:0001:1313
+                                 -                     -       -       0       i
+Leaf2-s1#show bgp evpn route-type ethernet-segment
+BGP routing table information for VRF default
+Router identifier 1.2.2.2, local AS number 65002
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >Ec    RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1212 1.1.1.1
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1212 1.1.1.1
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >      RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1212 1.2.2.2
+                                 -                     -       -       0       i
+ * >Ec    RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1313 1.1.1.1
+                                 1.1.1.1               -       100     0       65100 65001 i
+ *  ec    RD: 1.1.1.1:1 ethernet-segment 0000:0000:0000:0001:1313 1.1.1.1
+                                 1.1.1.1               -       100     0       65100 65001 i
+ * >      RD: 1.2.2.2:1 ethernet-segment 0000:0000:0000:0001:1313 1.2.2.2
+
+```
+
 </details>
 
-#### Проверка Ping:
+#### Проверка Ping связности между Site1 и Site2:
 
+<details>
+<summary>ping</summary>
+
+Запускаем ping с CE1-s1 до CE4-s2 
+Наблюдаем, что траффик ходит, связность есть:
+
+```
+ubuntu@ce1-s1:~$ ping -I v10.bond0 192.168.240.1
+PING 192.168.240.1 (192.168.240.1) from 192.168.10.1 v10.bond0: 56(84) bytes of data.
+64 bytes from 192.168.240.1: icmp_seq=1 ttl=60 time=31.9 ms
+64 bytes from 192.168.240.1: icmp_seq=2 ttl=60 time=31.8 ms
+64 bytes from 192.168.240.1: icmp_seq=3 ttl=60 time=26.5 ms
+64 bytes from 192.168.240.1: icmp_seq=4 ttl=60 time=28.8 ms
+^C
+--- 192.168.240.1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+rtt min/avg/max/mdev = 26.503/29.749/31.866/2.245 ms
+```
+
+Аналогично можно повторить для любой другой пары клиентов.
+
+</details>
+
+
+#### Проверка ping-ом отказоустойчивости схемы на примере пары Leaf1-s1 Leaf2-s1 и клиента CE1-s1
 ##### С CE1 на CE3:
 1) Запускаем пинг с интервалом 0.5 сек
 ```
@@ -393,9 +706,9 @@ PING 192.168.30.1 (192.168.30.1) 56(84) bytes of data.
 2) Здесь отключаем линк, через который идёт траффик (то, что он идёт именно через Leaf1, а не через Leaf2 был установлено предварительно по счётчикам на интерфейсах)
 
 ```
-Leaf1#configure t
-Leaf1(config)#interface Ethernet 11
-Leaf1(config-if-Et11)#shut
+Leaf1-s1#configure t
+Leaf1-s1(config)#interface Ethernet 11
+Leaf1-s1(config-if-Et11)#shut
 ```
 
 Наблюдаем за потерями:
@@ -421,8 +734,8 @@ Leaf1(config-if-Et11)#shut
 ```
 3) В этот момент включаем линк обратно
 ```
-Leaf1(config-if-Et11)#no shutdown
-Leaf1(config-if-Et11)#
+Leaf1-s1(config-if-Et11)#no shutdown
+Leaf1-s1(config-if-Et11)#
 ```
 
 4) Наблюдаем
