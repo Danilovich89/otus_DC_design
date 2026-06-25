@@ -6,12 +6,10 @@
 
 #### Адресация Site-1
 
-##### Адресация фабрики Site-1
-
 <details>
 <summary>IP Plan Site-1</summary>
 
-###### Spine-ы Site-1:
+##### Spine-ы Site-1:
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
@@ -30,7 +28,7 @@ Spine2-s1|Ethernet4|10.2.4.1|255.255.255.252|to_leaf4 | 65100
 Spine2-s1|Ethernet5|10.2.5.1|255.255.255.252|to_BGW1 | 65100
 Spine2-s1|Ethernet6|10.2.6.1|255.255.255.252|to_BGW2 | 65100
 
-###### Leaf-ы Site-1 : 
+##### Leaf-ы Site-1 : 
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
@@ -47,7 +45,7 @@ Leaf4-s1|Loopback0|1.4.4.4|255.255.255.255|router_id_Leaf4|65004
 Leaf4-s1|Ethernet1|10.1.4.2|255.255.255.252|to_Spine1|65004
 Leaf4-s1|Ethernet2|10.2.4.2|255.255.255.252|to_Spine2|65004
 
-###### BGW-ы Site-1 : 
+##### BGW-ы Site-1 : 
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
@@ -80,14 +78,15 @@ CE2-s1|bond0(ens3+ens4)|192.168.20.1|255.255.255.0|to_Leaf1+Leaf2/Eth12 |vlan20
 CE3-s1|ens3|192.168.30.1|255.255.255.0|to_Leaf3_Eth12 |vlan30
 CE4-s1|ens3|192.168.40.1|255.255.255.0|to_Leaf4_Eth12 |vlan40
 
+</details>
+
 #### Адресация Site-2
 
-##### Адресация фабрики Site-2
 
 <details>
 <summary>IP Plan Site-2</summary>
 
-###### Spine-ы Site-2:
+##### Spine-ы Site-2:
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
 |---|---|---|---|---|---|
@@ -158,6 +157,8 @@ CE2-s2|bond0(ens3+ens4)|192.168.220.1|255.255.255.0|to_Leaf1+Leaf2/Eth12 |vlan22
 CE3-s2|ens3|192.168.230.1|255.255.255.0|to_Leaf3_Eth12 |vlan230
 CE4-s2|ens3|192.168.240.1|255.255.255.0|to_Leaf4_Eth12 |vlan240
 
+</details>
+
 #### Router server
 
 |Device|Interface|IP Address|Subnet Mask|Description| AS
@@ -223,7 +224,9 @@ BGW2-s2#show bgp summary | grep 65300
 172.17.0.6          65300 Established   L2VPN EVPN              Negotiated              6          6
 ```
 
-#### Intersite BGP-соседства:
+</details>
+
+#### Intrasite BGP-соседства:
 Здесь демонстрируем соседства внутри каждого сайта
 
 <details>
@@ -338,15 +341,21 @@ Neighbor          AS Session State AFI/SAFI                AFI/SAFI State   NLRI
 20.2.6.2       65105 Established   IPv4 Unicast            Negotiated             15         15
 ```
 
+</details> 
 
 #### EVPN-маршруты type 5
 <details>
-<summary>show bgp evpn ip-prefix ipv4</summary>
+<summary>show bgp evpn route-type ip-prefix ipv4</summary>
 
+
+</details>
 
 #### EVPN-маршруты type 1, type 4 (Anycast GW)
 
+<details>
+<summary>show bgp evpn route-type ethernet-segment</summary>
 
+</details>
 
 #### Проверка Ping:
 
