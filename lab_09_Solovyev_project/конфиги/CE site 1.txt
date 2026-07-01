@@ -1,7 +1,7 @@
 Site1:
 
 CE1:
-
+sudo hostnamectl set-hostname ce1-s1
 sudo ip link set down ens3
 sudo ip link set down ens4
 sudo ip link add bond0 type bond mode 802.3ad 
@@ -18,7 +18,7 @@ sudo ip link set up v10.bond0
 sudo ip r add default via 192.168.10.254
 
 CE2:
-
+sudo hostnamectl set-hostname ce2-s1
 sudo ip link set down ens3
 sudo ip link set down ens4
 sudo ip link add bond0 type bond mode 802.3ad 
@@ -35,6 +35,7 @@ sudo ip link set up v20.bond0
 sudo ip r add default via 192.168.20.254
 
 CE3:
+sudo hostnamectl set-hostname ce3-s1
 sudo ip link add link ens3 name v30.ens3 type vlan id 30
 sudo ip addr add 192.168.30.1/24 dev v30.ens3
 sudo ip link set up ens3
@@ -43,6 +44,7 @@ sudo ip r add default via 192.168.30.100
 
 
 CE4:
+sudo hostnamectl set-hostname ce4-s1
 sudo ip link add link ens3 name v40.ens3 type vlan id 40
 sudo ip addr add 192.168.40.1/24 dev v40.ens3
 sudo ip link set up ens3
